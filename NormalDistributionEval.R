@@ -1,4 +1,4 @@
-title: "EMAP 502 Homework: Exploratory Data Analysis"
+title: "Exploratory Data Analysis"
 author: "Laniya Thompson"
 date: "September 14, 2020"
 output: word_document
@@ -20,19 +20,19 @@ refinery = Refinery.CO.df[Refinery.CO.df$Source == "refinery",]
 install.packages("EnvStats")
 
 ggplot(refinery,aes(CO.ppm))+ geom_histogram(bins= 4,fill = "pink") + labs(x = "carbon monoxide", title = "Histogram of the CO readings ")
-#ANSWER Skewed Right
+#Skewed Right
 
 #2
 qqnorm(refinery$CO.ppm, pch = 19)
 qqline(refinery$CO.ppm, col = "pink")
 
-# ANSWER Not normally distributed. 
+# Not normally distributed. 
 
 #Transofrmation of the data.
 x = log(Refinery.CO.df$CO.ppm)
 qqnorm(x, pch = 19)
 qqline(x, col = "pink")
-# ANSWER normally distributed because it is now a straighter line 
+
 
 #3
 y = log(Refinery.CO.df$CO.ppm)
