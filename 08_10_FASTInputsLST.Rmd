@@ -1,0 +1,214 @@
+---
+title: "FAST Input"
+author: "Laniya Thompson"
+date: "7/21/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r include = FALSE}
+# Prevent warnings from showing up in markdown output
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE)
+#install.packages('tidyverse')
+#install.packages('cran')
+library(dplyr)
+library(tidyverse)
+options(scipen=999)
+# tidyr - Help create tidy data
+# stringr - Make working with strings easier (string_glue())
+# readr - Read csv, txt, etc
+# tibble - Wrapper for data.frames that makes things easier (e.g. never converts strings to factors)
+
+library(readxl) # Read data from xlsx files via read_excel()
+
+#library(openxlsx) # Create and write to formatted xlsx documents
+
+wd <- getwd()
+
+```
+
+#DEFINE DATA
+```{r}
+ALLUNITS <- read_excel(str_glue("{wd}/UNALTEREDEPA617_BC_75l State Emissions_10-07-20 ToEPA.xlsx"), na ="", col_types = c("text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), skip=4, sheet="All Units")
+COAL <- read_excel(str_glue("{wd}/UNALTEREDEPA617_BC_75l State Emissions_10-07-20 ToEPA.xlsx"), na="", col_types = c("text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), skip=4, sheet="All Units_Coal")
+NONCOAL <- read_excel(str_glue("{wd}/UNALTEREDEPA617_BC_75l State Emissions_10-07-20 ToEPA.xlsx"), na="", col_types = c("text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), skip=4, sheet="All Units_NonCoal")
+STATECW <- read_excel(str_glue("{wd}/Copy of States.xlsx"))
+```
+
+```{r}
+ALLUNITS <- ALLUNITS[-c(51,53:59),]
+COAL <- COAL[-c(51,53:59),]
+NONCOAL <- NONCOAL[-c(51,53:59),]
+STATECW <- STATECW[-c(3)]
+```
+
+```{r}
+ALLUNITS$...1[1] <- "State"
+#TB 
+TB <- data.frame(ALLUNITS[52:54,])
+sum(TB[,2:33])
+TB[4,(2:33)] <- colSums(TB[,2:33], na.rm=TRUE)
+myNumCols <- which(unlist(lapply(TB, is.numeric)))
+TB[(nrow(TB) + 1), myNumCols] <- colSums(TB[, myNumCols], na.rm=TRUE) 
+TB <- TB[-c(1:3),]
+ColNameList <- colnames(ALLUNITS)
+colnames(TB) <- c(ColNameList)
+TB[1,1] <- "TB"
+ALLUNITScomb <- rbind(ALLUNITS, TB)
+ALLUNITS <- ALLUNITScomb
+
+#SUBTRACT
+ALLUNITS[52,1] <- "ArizonaT"
+ALLUNITS[54,1] <- "New MexicoT"
+ALLUNITS[53,1] <- "UtahT"
+```
+
+```{r}
+ALLUNITS_CTV <- as.data.frame(ALLUNITS[1:55,])
+ALLUNITS_CTV[ALLUNITS_CTV$...1 == "Arizona",2:33] <- 
+  ALLUNITS[ALLUNITS$...1 == "Arizona", 2:33] - ALLUNITS[ALLUNITS$...1 == "ArizonaT", 2:33]
+
+ALLUNITS_CTV[ALLUNITS_CTV$...1 == "New Mexico",2:33] <- 
+  ALLUNITS[ALLUNITS$...1 == "New Mexico", 2:33] -ALLUNITS[ALLUNITS$...1  == "New MexicoT", 2:33]
+
+ALLUNITS_CTV[ALLUNITS_CTV$...1  == "Utah",2:33] <- 
+  ALLUNITS[ALLUNITS$...1  == "Utah", 2:33] -ALLUNITS[ALLUNITS$...1  == "UtahT", 2:33]
+
+ALLUNITS_CTV <- ALLUNITS_CTV[-c(51:54),]
+ALLUNITS_CTV_Tons <- ALLUNITS_CTV
+ALLUNITS_CTV_Tons[,2:33] <- ALLUNITS_CTV[,2:33] * 1000
+```
+
+
+```{r}
+COAL$...1[1] <- "State"
+
+
+#TB 
+TB_C <- data.frame(COAL[52:54,])
+sum(TB_C[,2:33])
+TB_C[4,(2:33)] <- colSums(TB_C[,2:33], na.rm=TRUE)
+myNumCols_C <- which(unlist(lapply(TB_C, is.numeric)))
+TB_C[(nrow(TB_C) + 1), myNumCols_C] <- colSums(TB_C[, myNumCols_C], na.rm=TRUE) 
+TB_C <- TB_C[-c(1:3),]
+ColNameList <- colnames(ALLUNITS)
+colnames(TB_C) <- c(ColNameList)
+TB_C[1,1] <- "TB"
+COALcomb <- rbind(COAL, TB)
+COAL <- COALcomb
+
+
+#SUBTRACT
+COAL[52,1] <- "ArizonaT"
+COAL[54,1] <- "New MexicoT"
+COAL[53,1] <- "UtahT"
+
+COAL_CTV <- as.data.frame(COAL[1:55,])
+COAL_CTV[COAL_CTV$...1 == "Arizona",2:33] <- 
+  COAL[COAL$...1 == "Arizona", 2:33] -COAL[COAL$...1 == "ArizonaT", 2:33]
+
+COAL_CTV[COAL_CTV$...1 == "New Mexico",2:33] <- 
+  COAL[COAL$...1 == "New Mexico", 2:33] -COAL[COAL$...1  == "New MexicoT", 2:33]
+
+COAL_CTV[COAL_CTV$...1  == "Utah",2:33] <- 
+ COAL[COAL$...1  == "Utah", 2:33] -COAL[COAL$...1  == "UtahT", 2:33]
+
+```
+
+```{r}
+COAL_CTV <- COAL_CTV[-c(51:54),]
+COAL_CTV_Tons <- COAL_CTV
+Year_Nums <- (COAL_CTV_Tons[1,-1]) / 1000
+```
+
+```{r}
+NONCOAL$...1[1] <- "State"
+
+#TB  
+TB_NC <- data.frame(NONCOAL[52:54,])
+sum(TB_NC[,2:33])
+TB_NC[4,(2:33)] <- colSums(TB_NC[,2:33], na.rm=TRUE)
+myNumCols_NC <- which(unlist(lapply(TB_NC, is.numeric)))
+TB_NC[(nrow(TB_NC) + 1), myNumCols_NC] <- colSums(TB_NC[, myNumCols_NC], na.rm=TRUE) 
+TB_NC <- TB_NC[-c(1:3),]
+ColNameList <- colnames(ALLUNITS)
+colnames(TB_NC) <- c(ColNameList)
+TB_NC[1,1] <- "TB"
+NONcomb <- rbind(NONCOAL, TB)
+NONCOAL <- NONcomb
+
+
+#SUBTRACT
+NONCOAL[52,1] <- "ArizonaT"
+NONCOAL[54,1] <- "New MexicoT"
+NONCOAL[53,1] <- "UtahT"
+
+NONCOAL_CTV <- as.data.frame(NONCOAL[1:55,])
+NONCOAL_CTV[NONCOAL_CTV$...1 == "Arizona",2:33] <- 
+  NONCOAL[NONCOAL$...1 == "Arizona", 2:33] -NONCOAL[NONCOAL$...1 == "ArizonaT", 2:33]
+
+NONCOAL_CTV[COAL_CTV$...1 == "New Mexico",2:33] <- 
+  NONCOAL[NONCOAL$...1 == "New Mexico", 2:33] -NONCOAL[NONCOAL$...1  == "New MexicoT", 2:33]
+
+NONCOAL_CTV[NONCOAL_CTV$...1  == "Utah",2:33] <- 
+ NONCOAL[NONCOAL$...1  == "Utah", 2:33] -NONCOAL[NONCOAL$...1  == "UtahT", 2:33]
+NONCOAL_CTV <- NONCOAL_CTV[-c(51:54),]
+NONCOAL_CTV_Tons <- NONCOAL_CTV
+```
+
+
+
+```{r}
+NONCOAL_CTV_Tons[,2:33] <- NONCOAL_CTV[,2:33] * 1000
+COAL_CTV_Tons[,2:33] <- COAL_CTV[,2:33] * 1000
+```
+
+```{r}
+#STATE CROSSWALK
+STATECW <- rbind(STATECW, "TB")
+STATECW <- rbind(STATECW, "State")
+COAL_CTV_Tons <- right_join(COAL_CTV, STATECW, by = c("...1" = "StateName...1"))
+ALLUNITS_CTV_Tons <- right_join(ALLUNITS_CTV, STATECW, by = c("...1" = "StateName...1"))
+NONCOAL_CTV_Tons <- right_join(ALLUNITS_CTV, STATECW, by = c("...1" = "StateName...1"))
+
+```
+
+
+```{r}
+# ----------------- START OF FOR LOOP WORK --------------------------------
+#   ----------------- START OF FOR LOOP WORK --------------------------------
+#   ----------------- START OF FOR LOOP WORK --------------------------------
+#   ----------------- START OF FOR LOOP WORK --------------------------------
+#   ----------------- START OF FOR LOOP WORK --------------------------------
+  
+```
+
+```{r}
+#NONCOAL_CTV_Tons <- NONCOAL_CTV_Tons[,-c(34)]
+#COAL_CTV_Tons <- COAL_CTV_Tons[,-c(34)]
+
+```
+
+
+```{r}
+pollutant <- c('SO2', 'Ozone Season Nox', 'Annual Nox', 'PM 2.5')
+num_years <- 8
+  
+  for (i in 0:(length(pollutant)-1)) {
+COAL_  <- COAL_CTV_Tons[, -1]
+colnames(COAL_) <- Year_Nums
+NONCOAL_  <- NONCOAL_CTV_Tons[, -1]
+colnames(NONCOAL_) <- Year_Nums
+  for (j in 1:num_years) {
+    print(str_glue("{i} {j} = {i*8 + j}"))
+      tmp <- data.frame(state = NONCOAL_CTV_Tons[-1,34],
+                      coal = round(COAL_[-1, (i*8 + (j))], digits = 4),
+                      non_coal = round(NONCOAL_[-1, (i*8 + (j))], digits = 4))
+write_csv(tmp, paste0( "EPA617_BC_75l", "_", pollutant[i+1], "_", colnames(COAL_)[j], ".csv"))
+  }}
+    
+```
+
+
+
